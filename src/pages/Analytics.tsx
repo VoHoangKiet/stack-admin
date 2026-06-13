@@ -43,18 +43,18 @@ export const Analytics: React.FC = () => {
 
   const wsColumns = [
     { title: 'Workspace', dataIndex: 'name', key: 'name' },
-    { title: 'Chủ sở hữu', dataIndex: 'ownerName', key: 'ownerName' },
-    { title: 'Thành viên', dataIndex: 'memberCount', key: 'memberCount' },
+    { title: 'Owner', dataIndex: 'ownerName', key: 'ownerName' },
+    { title: 'Members', dataIndex: 'memberCount', key: 'memberCount' },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Phân tích</h2>
-          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>User activity và workspace analytics.</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Analytics</h2>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>User activity and workspace analytics.</p>
         </div>
-        <Button icon={<RefreshCw size={16} />} onClick={fetchData}>Làm mới</Button>
+        <Button icon={<RefreshCw size={16} />} onClick={fetchData}>Refresh</Button>
       </div>
 
       <Row gutter={[16, 16]}>
@@ -66,12 +66,12 @@ export const Analytics: React.FC = () => {
           <div style={{ fontSize: 28, fontWeight: 700, color: '#3b82f6' }}>
             {activeUsers.reduce((s, r) => s + r.users, 0)}
           </div>
-          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Lượt active (30 ngày)</div>
+          <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Active Users (30 Days)</div>
         </Card></Col>
       </Row>
 
       {activeUsers.length > 0 && (
-        <Card title="User Active (30 ngày)" bordered={false}>
+        <Card title="Active Users (30 Days)" bordered={false}>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={activeUsers}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -88,15 +88,15 @@ export const Analytics: React.FC = () => {
         <Table dataSource={workspaces} columns={wsColumns} rowKey="id" pagination={false} loading={loading} />
       </Card>
 
-      <Card title="Tra cứu người dùng" bordered={false}>
+      <Card title="User Search" bordered={false}>
         <div style={{ display: 'flex', gap: 12 }}>
           <Input.Search
-            placeholder="Nhập User ID..."
+            placeholder="Enter User ID..."
             value={searchId}
             onChange={e => setSearchId(e.target.value)}
             onSearch={searchUser}
             style={{ maxWidth: 400 }}
-            enterButton="Tra cứu"
+            enterButton="Search"
           />
         </div>
       </Card>
@@ -111,7 +111,7 @@ export const Analytics: React.FC = () => {
             <Descriptions.Item label="Workspace count">{userDetail.workspaceCount}</Descriptions.Item>
           </Descriptions>
         ) : (
-          <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>Không tìm thấy user</div>
+          <div style={{ textAlign: 'center', padding: 24, color: 'var(--text-muted)' }}>User not found</div>
         )}
       </Modal>
     </div>

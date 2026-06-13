@@ -14,7 +14,7 @@ import { Health } from './pages/Health';
 import { Analytics } from './pages/Analytics';
 import { Content } from './pages/Content';
 import { Communications } from './pages/Communications';
-import viVN from 'antd/locale/vi_VN';
+import enUS from 'antd/locale/en_US';
 
 const App: React.FC = () => {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -37,7 +37,7 @@ const App: React.FC = () => {
 
   return (
     <ConfigProvider
-      locale={viVN}
+      locale={enUS}
       theme={{
         algorithm: darkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
         token: {

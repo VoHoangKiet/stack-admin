@@ -8,6 +8,7 @@ export interface User {
   name: string;
   role: string;
   avatar?: string;
+  isWorkspaceAdminOrOwner?: boolean;
 }
 
 interface AuthContextType {
@@ -31,7 +32,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .get('/users/me')
         .then((res) => {
           const userData = res.data.data;
-          if (userData.role !== 'ADMIN') {
+          if (userData.role !== 'ADMIN' && !userData.isWorkspaceAdminOrOwner) {
             localStorage.clear();
             window.location.href = '/login';
             return;
@@ -56,7 +57,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const profileRes = await apiClient.get('/users/me');
     const userData = profileRes.data.data;
 
-    if (userData.role !== 'ADMIN') {
+    if (userData.role !== 'ADMIN' && !userData.isWorkspaceAdminOrOwner) {
       localStorage.clear();
       throw new Error('Tài khoản không có quyền truy cập admin');
     }

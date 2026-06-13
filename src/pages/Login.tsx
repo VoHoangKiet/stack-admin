@@ -15,15 +15,15 @@ export const Login: React.FC = () => {
     setLoading(true);
     try {
       await login(values.email, values.password);
-      message.success('Đăng nhập thành công!');
+      message.success('Logged in successfully!');
       navigate('/');
     } catch (err: any) {
       if (err.response?.status === 401) {
-        message.error('Email hoặc mật khẩu không đúng');
-      } else if (err.message === 'Tài khoản không có quyền truy cập admin') {
-        message.error('Tài khoản không có quyền truy cập admin');
+        message.error('Invalid email or password');
+      } else if (err.message === 'Tài khoản không có quyền truy cập admin' || err.response?.data?.message?.includes('admin')) {
+        message.error('Account does not have admin access');
       } else {
-        message.error('Đăng nhập thất bại. Vui lòng thử lại sau.');
+        message.error('Login failed. Please try again later.');
       }
     } finally {
       setLoading(false);
@@ -68,7 +68,7 @@ export const Login: React.FC = () => {
           <Title level={3} style={{ margin: 0, fontWeight: 700 }}>
             Stack Admin
           </Title>
-          <Text type="secondary">Đăng nhập để quản trị hệ thống</Text>
+          <Text type="secondary">Sign in to manage the system</Text>
         </div>
 
         <Form
@@ -81,8 +81,8 @@ export const Login: React.FC = () => {
             name="email"
             label="Email"
             rules={[
-              { required: true, message: 'Vui lòng nhập email' },
-              { type: 'email', message: 'Email không hợp lệ' },
+              { required: true, message: 'Please enter email' },
+              { type: 'email', message: 'Invalid email address' },
             ]}
           >
             <Input
@@ -95,8 +95,8 @@ export const Login: React.FC = () => {
 
           <Form.Item
             name="password"
-            label="Mật khẩu"
-            rules={[{ required: true, message: 'Vui lòng nhập mật khẩu' }]}
+            label="Password"
+            rules={[{ required: true, message: 'Please enter password' }]}
           >
             <Input.Password
               prefix={<Lock size={16} style={{ color: 'var(--text-light)' }} />}
@@ -120,7 +120,7 @@ export const Login: React.FC = () => {
                 fontSize: 15,
               }}
             >
-              Đăng nhập
+              Sign In
             </Button>
           </Form.Item>
         </Form>

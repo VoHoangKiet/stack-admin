@@ -78,21 +78,21 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ darkMode, setDarkMode 
     return (
       <Breadcrumb style={{ margin: '0', display: 'flex', alignItems: 'center' }}>
         <Breadcrumb.Item>
-          <Link to="/">Trang chủ</Link>
+          <Link to="/">Home</Link>
         </Breadcrumb.Item>
         {pathnames.map((name, index) => {
           const routeTo = `/${pathnames.slice(0, index + 1).join('/')}`;
           const isLast = index === pathnames.length - 1;
           const displayName =
-            name === 'users' ? 'Quản lý người dùng' :
-            name === 'settings' ? 'Cài đặt hệ thống' :
-            name === 'workspaces' ? 'Quản lý Workspace' :
-            name === 'task-monitor' ? 'Giám sát công việc' :
-            name === 'health' ? 'Sức khỏe hệ thống' :
-            name === 'analytics' ? 'Phân tích' :
-            name === 'content' ? 'Quản lý nội dung' :
-            name === 'audit-logs' ? 'Nhật ký hoạt động' :
-            name === 'communications' ? 'Liên lạc' :
+            name === 'users' ? 'User Management' :
+            name === 'settings' ? 'System Settings' :
+            name === 'workspaces' ? 'Workspace Management' :
+            name === 'task-monitor' ? 'Task Monitor' :
+            name === 'health' ? 'System Health' :
+            name === 'analytics' ? 'Analytics' :
+            name === 'content' ? 'Content Management' :
+            name === 'audit-logs' ? 'Audit Logs' :
+            name === 'communications' ? 'Communications' :
             name.charAt(0).toUpperCase() + name.slice(1);
           
           return isLast ? (
@@ -107,63 +107,65 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ darkMode, setDarkMode 
     );
   };
 
+  const isSystemAdmin = user?.role === 'ADMIN';
+
   const menuItems = [
-    {
+    isSystemAdmin && {
       key: '/',
       icon: <LayoutDashboard size={18} />,
-      label: <Link to="/">Tổng quan</Link>,
+      label: <Link to="/">Dashboard</Link>,
     },
-    {
+    isSystemAdmin && {
       key: '/users',
       icon: <Users size={18} />,
-      label: <Link to="/users">Người dùng</Link>,
+      label: <Link to="/users">Users</Link>,
     },
     {
       key: '/workspaces',
       icon: <Building2 size={18} />,
-      label: <Link to="/workspaces">Workspace</Link>,
+      label: <Link to="/workspaces">Workspaces</Link>,
     },
-    {
+    isSystemAdmin && {
       key: '/task-monitor',
       icon: <CheckSquare size={18} />,
-      label: <Link to="/task-monitor">Công việc</Link>,
+      label: <Link to="/task-monitor">Tasks</Link>,
     },
-    {
+    isSystemAdmin && {
       key: '/health',
       icon: <Activity size={18} />,
-      label: <Link to="/health">Hệ thống</Link>,
+      label: <Link to="/health">System</Link>,
     },
-    {
+    isSystemAdmin && {
       key: '/analytics',
       icon: <BarChart3 size={18} />,
-      label: <Link to="/analytics">Phân tích</Link>,
+      label: <Link to="/analytics">Analytics</Link>,
     },
-    {
+    isSystemAdmin && {
       key: '/content',
       icon: <FileText size={18} />,
-      label: <Link to="/content">Nội dung</Link>,
+      label: <Link to="/content">Content</Link>,
     },
-    {
+    isSystemAdmin && {
       key: '/audit-logs',
       icon: <History size={18} />,
-      label: <Link to="/audit-logs">Nhật ký</Link>,
+      label: <Link to="/audit-logs">Audit Logs</Link>,
     },
-    {
+    isSystemAdmin && {
       key: '/communications',
       icon: <Phone size={18} />,
-      label: <Link to="/communications">Liên lạc</Link>,
+      label: <Link to="/communications">Communications</Link>,
     },
     {
       key: '/settings',
       icon: <SettingsIcon size={18} />,
-      label: <Link to="/settings">Cài đặt</Link>,
+      label: <Link to="/settings">Settings</Link>,
     },
-  ];
+  ].filter(Boolean) as any;
 
   const userMenuItems = [
     {
       key: 'profile',
-      label: 'Hồ sơ cá nhân',
+      label: 'Profile',
       icon: <User size={14} />,
       onClick: () => navigate('/settings'),
     },
@@ -172,7 +174,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ darkMode, setDarkMode 
     },
     {
       key: 'logout',
-      label: 'Đăng xuất',
+      label: 'Logout',
       danger: true,
       icon: <LogOut size={14} />,
       onClick: () => logout(),
@@ -185,14 +187,14 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ darkMode, setDarkMode 
           key: n.id || String(i),
           label: (
             <div style={{ padding: '4px 8px', maxWidth: 250 }}>
-              <p style={{ margin: 0, fontSize: '13px' }}>{n.title || n.body || 'Thông báo mới'}</p>
+              <p style={{ margin: 0, fontSize: '13px' }}>{n.title || n.body || 'New Notification'}</p>
               <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'var(--text-muted)' }}>
-                {n.createdAt ? new Date(n.createdAt).toLocaleString('vi-VN') : ''}
+                {n.createdAt ? new Date(n.createdAt).toLocaleString('en-US') : ''}
               </p>
             </div>
           ),
         }))
-      : [{ key: 'empty', label: <div style={{ padding: '8px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>Không có thông báo</div> }],
+      : [{ key: 'empty', label: <div style={{ padding: '8px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>No notifications</div> }],
   };
 
   return (
@@ -307,7 +309,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ darkMode, setDarkMode 
               <Search size={16} style={{ position: 'absolute', left: 10, color: 'var(--text-light)' }} />
               <input 
                 type="text" 
-                placeholder="Tìm kiếm..." 
+                placeholder="Search..." 
                 style={{
                   padding: '6px 12px 6px 32px',
                   borderRadius: '12px',
@@ -399,7 +401,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ darkMode, setDarkMode 
           borderTop: '1px solid var(--border-color)',
           background: 'var(--bg-card)'
         }}>
-          Stack Admin &copy; {new Date().getFullYear()} - Thiết kế với ❤️ và Ant Design
+          Stack Admin &copy; {new Date().getFullYear()} - Designed with ❤️ and Ant Design
         </footer>
       </Layout>
 

@@ -39,7 +39,7 @@ export const AuditLogs: React.FC = () => {
       setLogs(res.data.data);
       setTotal(res.data.meta?.total || 0);
     } catch {
-      message.error('Không thể tải audit logs');
+      message.error('Failed to load audit logs');
     } finally {
       setLoading(false);
     }
@@ -50,33 +50,33 @@ export const AuditLogs: React.FC = () => {
   }, [fetchLogs]);
 
   const actionLabels: Record<string, string> = {
-    'user.create': 'Tạo người dùng',
-    'user.update': 'Cập nhật người dùng',
-    'user.delete': 'Xoá người dùng',
-    'settings.update': 'Cập nhật cấu hình',
-    'workspace.view': 'Xem workspace',
+    'user.create': 'Create User',
+    'user.update': 'Update User',
+    'user.delete': 'Delete User',
+    'settings.update': 'Update Settings',
+    'workspace.view': 'View Workspace',
   };
 
   const resourceLabels: Record<string, string> = {
-    user: 'Người dùng',
+    user: 'User',
     workspace: 'Workspace',
-    setting: 'Cấu hình',
+    setting: 'Settings',
   };
 
   const columns = [
     {
-      title: 'Thời gian',
+      title: 'Timestamp',
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 180,
       render: (date: string) => (
         <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-          {new Date(date).toLocaleString('vi-VN')}
+          {new Date(date).toLocaleString('en-US')}
         </span>
       ),
     },
     {
-      title: 'Người thực hiện',
+      title: 'Performed By',
       dataIndex: 'userName',
       key: 'userName',
       width: 200,
@@ -85,7 +85,7 @@ export const AuditLogs: React.FC = () => {
       ),
     },
     {
-      title: 'Hành động',
+      title: 'Action',
       dataIndex: 'action',
       key: 'action',
       width: 200,
@@ -96,7 +96,7 @@ export const AuditLogs: React.FC = () => {
       ),
     },
     {
-      title: 'Đối tượng',
+      title: 'Resource Type',
       dataIndex: 'resourceType',
       key: 'resourceType',
       width: 120,
@@ -105,13 +105,13 @@ export const AuditLogs: React.FC = () => {
       ),
     },
     {
-      title: 'Trạng thái',
+      title: 'Status',
       dataIndex: 'status',
       key: 'status',
       width: 100,
       render: (status: string) => (
         <Tag color={status === 'success' ? 'success' : 'error'}>
-          {status === 'success' ? 'Thành công' : 'Thất bại'}
+          {status === 'success' ? 'Success' : 'Failure'}
         </Tag>
       ),
     },
@@ -127,7 +127,7 @@ export const AuditLogs: React.FC = () => {
       ),
     },
     {
-      title: 'Chi tiết',
+      title: 'Details',
       key: 'metadata',
       render: (_: any, record: AuditLogItem) => (
         <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -142,10 +142,10 @@ export const AuditLogs: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>
-            Nhật ký hoạt động
+            Audit Logs
           </h2>
           <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
-            Theo dõi tất cả hoạt động quản trị trên hệ thống.
+            Monitor all admin activities on the system.
           </p>
         </div>
         <Button
@@ -153,7 +153,7 @@ export const AuditLogs: React.FC = () => {
           onClick={fetchLogs}
           style={{ height: '40px', borderRadius: 'var(--radius-md)' }}
         >
-          Làm mới
+          Refresh
         </Button>
       </div>
 
@@ -161,7 +161,7 @@ export const AuditLogs: React.FC = () => {
       <Card bordered={false}>
         <Space wrap size="middle">
           <Input
-            placeholder="Tìm kiếm..."
+            placeholder="Search..."
             prefix={<Search size={16} style={{ color: 'var(--text-light)' }} />}
             value={searchText}
             onChange={(e) => { setSearchText(e.target.value); setPage(1); }}
@@ -169,25 +169,25 @@ export const AuditLogs: React.FC = () => {
             allowClear
           />
           <Select
-            placeholder="Hành động"
+            placeholder="Action"
             style={{ width: 180 }}
             allowClear
             onChange={(val) => { setActionFilter(val || null); setPage(1); }}
             options={[
-              { value: 'user.create', label: 'Tạo người dùng' },
-              { value: 'user.update', label: 'Cập nhật người dùng' },
-              { value: 'user.delete', label: 'Xoá người dùng' },
-              { value: 'settings.update', label: 'Cập nhật cấu hình' },
+              { value: 'user.create', label: 'Create User' },
+              { value: 'user.update', label: 'Update User' },
+              { value: 'user.delete', label: 'Delete User' },
+              { value: 'settings.update', label: 'Update Settings' },
             ]}
           />
           <Select
-            placeholder="Trạng thái"
+            placeholder="Status"
             style={{ width: 150 }}
             allowClear
             onChange={(val) => { setStatusFilter(val || null); setPage(1); }}
             options={[
-              { value: 'success', label: 'Thành công' },
-              { value: 'failure', label: 'Thất bại' },
+              { value: 'success', label: 'Success' },
+              { value: 'failure', label: 'Failure' },
             ]}
           />
           {(actionFilter || statusFilter || searchText) && (
@@ -201,7 +201,7 @@ export const AuditLogs: React.FC = () => {
               }}
               style={{ fontWeight: 500, color: 'var(--primary)' }}
             >
-              Xóa bộ lọc
+              Clear Filters
             </Button>
           )}
         </Space>
@@ -210,7 +210,7 @@ export const AuditLogs: React.FC = () => {
       {/* Summary bar */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-muted)', fontSize: '13px' }}>
         <History size={16} />
-        <span>Tổng số: <strong>{total}</strong> hoạt động được ghi nhận</span>
+        <span>Total: <strong>{total}</strong> activities recorded</span>
       </div>
 
       {/* Table */}

@@ -25,32 +25,32 @@ export const Communications: React.FC = () => {
 
   const columns = [
     { title: 'Channel', dataIndex: 'channel_name', key: 'channel_name', render: (n: string) => n || '—' },
-    { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt',
-      render: (d: string) => d ? new Date(d).toLocaleString('vi-VN') : '—' },
+    { title: 'Created Date', dataIndex: 'createdAt', key: 'createdAt',
+      render: (d: string) => d ? new Date(d).toLocaleString('en-US') : '—' },
   ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Liên lạc</h2>
-          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>Lịch sử cuộc gọi và thống kê.</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Communications</h2>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>Call history and statistics.</p>
         </div>
-        <Button icon={<RefreshCw size={16} />} onClick={fetchData}>Làm mới</Button>
+        <Button icon={<RefreshCw size={16} />} onClick={fetchData}>Refresh</Button>
       </div>
 
       {stats && (
         <Row gutter={[16, 16]}>
           <Col xs={12} sm={6}><Card bordered={false}>
-            <Statistic title="Cuộc gọi (30 ngày)" value={stats.totalCalls} prefix={<Phone size={18} />} />
+            <Statistic title="Calls (30 Days)" value={stats.totalCalls} prefix={<Phone size={18} />} />
           </Card></Col>
           <Col xs={12} sm={6}><Card bordered={false}>
-            <Statistic title="TG trung bình" value={stats.avgDurationSeconds} suffix="s" />
+            <Statistic title="Avg Duration" value={stats.avgDurationSeconds} suffix="s" />
           </Card></Col>
         </Row>
       )}
 
-      <Card title="Lịch sử cuộc gọi" bordered={false} styles={{ body: { padding: 0 } }}>
+      <Card title="Call History" bordered={false} styles={{ body: { padding: 0 } }}>
         <Table dataSource={huddles} columns={columns} rowKey="id" loading={loading} pagination={false} />
       </Card>
     </div>

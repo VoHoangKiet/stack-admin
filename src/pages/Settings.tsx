@@ -49,10 +49,10 @@ export const Settings: React.FC = () => {
       } catch {
         // Settings not available yet - use defaults
         setSettings([
-          { key: 'maintenance_mode', value: 'false', type: 'boolean', description: 'Chế độ bảo trì — chỉ admin mới vào được' },
-          { key: 'allow_registration', value: 'true', type: 'boolean', description: 'Cho phép user tự đăng ký tài khoản' },
-          { key: 'api_debug_logging', value: 'true', type: 'boolean', description: 'Ghi log chi tiết request/response API' },
-          { key: 'email_notifications', value: 'true', type: 'boolean', description: 'Gửi thông báo qua email' },
+          { key: 'maintenance_mode', value: 'false', type: 'boolean', description: 'Maintenance mode — only admins can access' },
+          { key: 'allow_registration', value: 'true', type: 'boolean', description: 'Allow users to register accounts' },
+          { key: 'api_debug_logging', value: 'true', type: 'boolean', description: 'Detailed API request/response logging' },
+          { key: 'email_notifications', value: 'true', type: 'boolean', description: 'Send notifications via email' },
         ]);
       } finally {
         setSettingsLoading(false);
@@ -68,9 +68,9 @@ export const Settings: React.FC = () => {
         name: values.fullName,
         phone: values.phone,
       });
-      message.success('Cập nhật hồ sơ cá nhân thành công!');
+      message.success('Profile updated successfully!');
     } catch {
-      message.error('Không thể cập nhật hồ sơ');
+      message.error('Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -78,7 +78,7 @@ export const Settings: React.FC = () => {
 
   const handleSecuritySave = async (values: any) => {
     if (values.newPassword !== values.confirmPassword) {
-      message.error('Mật khẩu xác nhận không khớp!');
+      message.error('Confirm password does not match!');
       return;
     }
     setLoading(true);
@@ -87,10 +87,10 @@ export const Settings: React.FC = () => {
         oldPassword: values.currentPassword,
         newPassword: values.newPassword,
       });
-      message.success('Đã cập nhật mật khẩu mới thành công!');
+      message.success('Password updated successfully!');
       securityForm.resetFields();
     } catch {
-      message.error('Mật khẩu hiện tại không đúng');
+      message.error('Incorrect current password');
     } finally {
       setLoading(false);
     }
@@ -102,7 +102,7 @@ export const Settings: React.FC = () => {
     if (!file || !user) return;
 
     if (file.size > 2 * 1024 * 1024) {
-      message.error('Ảnh không được quá 2MB');
+      message.error('Image size must not exceed 2MB');
       return;
     }
 
@@ -113,11 +113,11 @@ export const Settings: React.FC = () => {
       await apiClient.post(`/users/avatar/${user.id}`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      message.success('Cập nhật ảnh đại diện thành công!');
+      message.success('Avatar updated successfully!');
       // Refresh page to show new avatar
       window.location.reload();
     } catch {
-      message.error('Không thể upload ảnh đại diện');
+      message.error('Failed to upload avatar');
     } finally {
       setAvatarUploading(false);
     }
@@ -139,12 +139,12 @@ export const Settings: React.FC = () => {
       });
       message.success(
         checked
-          ? `Đã bật ${settings.find((s) => s.key === key)?.description || key}`
-          : `Đã tắt ${settings.find((s) => s.key === key)?.description || key}`
+          ? `Enabled ${settings.find((s) => s.key === key)?.description || key}`
+          : `Disabled ${settings.find((s) => s.key === key)?.description || key}`
       );
     } catch {
       setSettings(prevSettings);
-      message.error('Không thể cập nhật cấu hình');
+      message.error('Failed to update configuration');
     } finally {
       setSavingSettings(false);
     }
@@ -155,7 +155,7 @@ export const Settings: React.FC = () => {
       key: 'profile',
       label: (
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <User size={16} /> Hồ sơ cá nhân
+          <User size={16} /> Profile
         </span>
       ),
       children: (
@@ -186,10 +186,10 @@ export const Settings: React.FC = () => {
                 loading={avatarUploading}
                 onClick={() => document.getElementById('avatar-upload')?.click()}
               >
-                Thay ảnh đại diện
+                Change Avatar
               </Button>
               <p style={{ margin: '8px 0 0 0', fontSize: '12px', color: 'var(--text-light)' }}>
-                PNG, JPG hoặc GIF. Tối đa 2MB.
+                PNG, JPG or GIF. Max 2MB.
               </p>
             </div>
           </div>
@@ -209,19 +209,19 @@ export const Settings: React.FC = () => {
               }}
             >
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <Form.Item name="fullName" label="Họ và tên" rules={[{ required: true }]}>
+                <Form.Item name="fullName" label="Full Name" rules={[{ required: true }]}>
                   <Input style={{ height: '40px' }} />
                 </Form.Item>
-                <Form.Item name="email" label="Địa chỉ Email" rules={[{ required: true, type: 'email' }]}>
+                <Form.Item name="email" label="Email Address" rules={[{ required: true, type: 'email' }]}>
                   <Input disabled style={{ height: '40px' }} />
                 </Form.Item>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <Form.Item name="phone" label="Số điện thoại">
+                <Form.Item name="phone" label="Phone Number">
                   <Input style={{ height: '40px' }} />
                 </Form.Item>
-                <Form.Item name="timezone" label="Múi giờ">
+                <Form.Item name="timezone" label="Timezone">
                   <Select
                     style={{ height: '40px' }}
                     options={[
@@ -233,11 +233,11 @@ export const Settings: React.FC = () => {
                 </Form.Item>
               </div>
 
-              <Form.Item name="bio" label="Giới thiệu bản thân">
-                <Input.TextArea rows={3} placeholder="Nhập một vài dòng giới thiệu..." />
+              <Form.Item name="bio" label="Bio">
+                <Input.TextArea rows={3} placeholder="Enter a brief bio..." />
               </Form.Item>
 
-              <Form.Item name="language" label="Ngôn ngữ mặc định">
+              <Form.Item name="language" label="Default Language">
                 <Radio.Group>
                   <Radio.Button value="vi">Tiếng Việt</Radio.Button>
                   <Radio.Button value="en">English</Radio.Button>
@@ -245,7 +245,7 @@ export const Settings: React.FC = () => {
               </Form.Item>
 
               <Button type="primary" htmlType="submit" loading={loading} style={{ height: '40px', borderRadius: 'var(--radius-md)', fontWeight: 500 }}>
-                Lưu cấu hình hồ sơ
+                Save Profile
               </Button>
             </Form>
           </div>
@@ -256,29 +256,29 @@ export const Settings: React.FC = () => {
       key: 'security',
       label: (
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Lock size={16} /> Bảo mật tài khoản
+          <Lock size={16} /> Security
         </span>
       ),
       children: (
         <div style={{ maxWidth: '600px', marginTop: 16 }}>
           <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', marginBottom: 20 }}>
-            Đổi mật khẩu tài khoản
+            Change Password
           </h3>
           <Form form={securityForm} layout="vertical" onFinish={handleSecuritySave}>
             <Form.Item
               name="currentPassword"
-              label="Mật khẩu hiện tại"
-              rules={[{ required: true, message: 'Vui lòng nhập mật khẩu hiện tại' }]}
+              label="Current Password"
+              rules={[{ required: true, message: 'Please enter current password' }]}
             >
               <Input.Password style={{ height: '40px' }} />
             </Form.Item>
 
             <Form.Item
               name="newPassword"
-              label="Mật khẩu mới"
+              label="New Password"
               rules={[
-                { required: true, message: 'Vui lòng nhập mật khẩu mới' },
-                { min: 6, message: 'Mật khẩu tối thiểu 6 ký tự!' },
+                { required: true, message: 'Please enter new password' },
+                { min: 6, message: 'Password must be at least 6 characters!' },
               ]}
             >
               <Input.Password style={{ height: '40px' }} />
@@ -286,8 +286,8 @@ export const Settings: React.FC = () => {
 
             <Form.Item
               name="confirmPassword"
-              label="Xác nhận mật khẩu mới"
-              rules={[{ required: true, message: 'Vui lòng xác nhận mật khẩu mới' }]}
+              label="Confirm New Password"
+              rules={[{ required: true, message: 'Please confirm your new password' }]}
             >
               <Input.Password style={{ height: '40px' }} />
             </Form.Item>
@@ -298,7 +298,7 @@ export const Settings: React.FC = () => {
               loading={loading}
               style={{ height: '40px', borderRadius: 'var(--radius-md)', fontWeight: 500 }}
             >
-              Cập nhật mật khẩu
+              Update Password
             </Button>
           </Form>
 
@@ -316,10 +316,10 @@ export const Settings: React.FC = () => {
             }}
           >
             <ShieldCheck size={18} style={{ color: 'var(--success)' }} />
-            Xác thực hai yếu tố (2FA)
+            Two-Factor Authentication (2FA)
           </h3>
           <p style={{ color: 'var(--text-muted)', fontSize: '13px', marginBottom: 16 }}>
-            Tăng thêm một lớp bảo mật cho tài khoản của bạn bằng cách yêu cầu mã xác minh mỗi khi đăng nhập.
+            Add an extra layer of security to your account by requiring a verification code when logging in.
           </p>
           <div
             style={{
@@ -333,9 +333,9 @@ export const Settings: React.FC = () => {
             }}
           >
             <div>
-              <strong style={{ display: 'block', fontSize: '14px' }}>Kích hoạt Authenticator App</strong>
+              <strong style={{ display: 'block', fontSize: '14px' }}>Enable Authenticator App</strong>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                Sử dụng các ứng dụng như Google Authenticator hoặc Authy để lấy mã.
+                Use apps like Google Authenticator or Authy to get verification codes.
               </span>
             </div>
             <Switch
@@ -343,8 +343,8 @@ export const Settings: React.FC = () => {
               onChange={(checked) => {
                 message.info(
                   checked
-                    ? 'Đã yêu cầu bật 2FA. Vui lòng quét mã QR gửi tới email của bạn.'
-                    : 'Đã tắt xác thực 2FA.'
+                    ? '2FA activation requested. Please scan the QR code sent to your email.'
+                    : '2FA disabled.'
                 );
               }}
             />
@@ -352,17 +352,17 @@ export const Settings: React.FC = () => {
         </div>
       ),
     },
-    {
+    user?.role === 'ADMIN' && {
       key: 'system',
       label: (
         <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <SettingsIcon size={16} /> Cấu hình hệ thống
+          <SettingsIcon size={16} /> System Configuration
         </span>
       ),
       children: (
         <div style={{ maxWidth: '600px', marginTop: 16 }}>
           <h3 style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-main)', marginBottom: 16 }}>
-            Chế độ hệ thống
+            System Modes
           </h3>
 
           {settingsLoading ? (
@@ -383,13 +383,13 @@ export const Settings: React.FC = () => {
                   <div style={{ flex: 1, marginRight: 24 }}>
                     <strong style={{ display: 'block', fontSize: '14px' }}>
                       {setting.key === 'maintenance_mode'
-                        ? 'Chế độ bảo trì (Maintenance Mode)'
+                        ? 'Maintenance Mode'
                         : setting.key === 'allow_registration'
-                          ? 'Đăng ký người dùng mới'
+                          ? 'User Registration'
                           : setting.key === 'api_debug_logging'
-                            ? 'Nhật ký Debug API'
+                            ? 'API Debug Logging'
                             : setting.key === 'email_notifications'
-                              ? 'Thông báo đẩy qua Email'
+                              ? 'Email Notifications'
                               : setting.key}
                     </strong>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
@@ -408,16 +408,16 @@ export const Settings: React.FC = () => {
         </div>
       ),
     },
-  ];
+  ].filter(Boolean) as any;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
         <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>
-          Cài đặt hệ thống
+          System Settings
         </h2>
         <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
-          Quản lý tài khoản cá nhân, mật khẩu, xác thực bảo mật và các cấu hình vận hành khác.
+          Manage personal profiles, passwords, security authentication, and other system configurations.
         </p>
       </div>
 

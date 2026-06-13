@@ -56,9 +56,9 @@ export const Users: React.FC = () => {
 
       const res = await apiClient.get('/users', { params });
       setUsers(res.data.data);
-      setTotal(res.data.meta?.total || 0);
+      setTotal(res.data.meta?.itemCount || 0);
     } catch (err: any) {
-      message.error('Không thể tải danh sách người dùng');
+      message.error('Failed to load user list');
     } finally {
       setLoading(false);
     }
@@ -99,11 +99,11 @@ export const Users: React.FC = () => {
       if (editingUser) {
         // Update
         await apiClient.patch(`/users/${editingUser.id}`, values);
-        message.success('Cập nhật thông tin người dùng thành công!');
+        message.success('User updated successfully!');
       } else {
         // Create
         await apiClient.post('/users', values);
-        message.success('Thêm người dùng mới thành công!');
+        message.success('User created successfully!');
       }
 
       setIsModalOpen(false);
@@ -115,7 +115,7 @@ export const Users: React.FC = () => {
       } else if (err.errorFields) {
         // Form validation error - ignore
       } else {
-        message.error('Có lỗi xảy ra. Vui lòng thử lại.');
+        message.error('An error occurred. Please try again.');
       }
     } finally {
       setModalLoading(false);
@@ -126,10 +126,10 @@ export const Users: React.FC = () => {
   const handleDelete = async (id: string) => {
     try {
       await apiClient.delete(`/users/${id}`);
-      message.success('Đã xóa người dùng khỏi hệ thống!');
+      message.success('User deleted from the system!');
       fetchUsers();
     } catch {
-      message.error('Không thể xóa người dùng');
+      message.error('Failed to delete user');
     }
   };
 
@@ -137,9 +137,9 @@ export const Users: React.FC = () => {
   const handleResetPassword = async (id: string) => {
     try {
       await apiClient.patch(`/users/reset-password/${id}`);
-      message.success('Đã reset mật khẩu về mặc định!');
+      message.success('Password reset to default!');
     } catch {
-      message.error('Không thể reset mật khẩu');
+      message.error('Failed to reset password');
     }
   };
 
@@ -155,20 +155,20 @@ export const Users: React.FC = () => {
         ...fields
       };
       await apiClient.patch(`/users/${record.id}`, payload);
-      message.success('Cập nhật thông tin thành công!');
+      message.success('Information updated successfully!');
       fetchUsers();
     } catch (err: any) {
       if (err.response?.data?.message) {
         message.error(err.response.data.message);
       } else {
-        message.error('Không thể cập nhật thông tin người dùng');
+        message.error('Failed to update user information');
       }
     }
   };
 
   const columns = [
     {
-      title: 'Người dùng',
+      title: 'User',
       dataIndex: 'name',
       key: 'name',
       render: (text: string, record: UserItem) => (
@@ -194,7 +194,7 @@ export const Users: React.FC = () => {
       ),
     },
     {
-      title: 'Vai trò',
+      title: 'Role',
       dataIndex: 'role',
       key: 'role',
       render: (role: string, record: UserItem) => (
@@ -205,15 +205,15 @@ export const Users: React.FC = () => {
           variant="borderless"
           popupClassName="role-select-dropdown"
           options={[
-            { value: 'ADMIN', label: <Tag color="purple" style={{ borderRadius: '6px', margin: 0 }}>Quản trị viên</Tag> },
-            { value: 'MODERATOR', label: <Tag color="cyan" style={{ borderRadius: '6px', margin: 0 }}>Biên tập viên</Tag> },
-            { value: 'USER', label: <Tag color="blue" style={{ borderRadius: '6px', margin: 0 }}>Người dùng</Tag> },
+            { value: 'ADMIN', label: <Tag color="purple" style={{ borderRadius: '6px', margin: 0 }}>Administrator</Tag> },
+            { value: 'MODERATOR', label: <Tag color="cyan" style={{ borderRadius: '6px', margin: 0 }}>Moderator</Tag> },
+            { value: 'USER', label: <Tag color="blue" style={{ borderRadius: '6px', margin: 0 }}>User</Tag> },
           ]}
         />
       ),
     },
     {
-      title: 'Trạng thái',
+      title: 'Status',
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => {
@@ -221,13 +221,13 @@ export const Users: React.FC = () => {
         const blocked = status === 'BLOCKED';
         return (
           <Tag color={active ? 'success' : blocked ? 'error' : 'warning'} style={{ borderRadius: '6px' }}>
-            {status === 'ACTIVE' ? 'Đang hoạt động' : status === 'BLOCKED' ? 'Tạm khóa' : 'Chờ xác thực'}
+            {status === 'ACTIVE' ? 'Active' : status === 'BLOCKED' ? 'Blocked' : 'Pending Verification'}
           </Tag>
         );
       },
     },
     {
-      title: 'SĐT',
+      title: 'Phone',
       dataIndex: 'phone',
       key: 'phone',
       render: (text: string) => (
@@ -235,17 +235,17 @@ export const Users: React.FC = () => {
       ),
     },
     {
-      title: 'Ngày tạo',
+      title: 'Created Date',
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (text: string) => (
         <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>
-          {new Date(text).toLocaleDateString('vi-VN')}
+          {new Date(text).toLocaleDateString('en-US')}
         </span>
       ),
     },
     {
-      title: 'Hành động',
+      title: 'Action',
       key: 'action',
       render: (_: any, record: UserItem) => {
         const isActive = record.status === 'ACTIVE';
@@ -261,11 +261,11 @@ export const Users: React.FC = () => {
             />
             {isActive ? (
               <Popconfirm
-                title="Khóa tài khoản"
-                description="Bạn có chắc chắn muốn khóa tài khoản này không? Người dùng sẽ không thể đăng nhập."
+                title="Block Account"
+                description="Are you sure you want to block this account? The user will not be able to log in."
                 onConfirm={() => handleUpdateUserField(record, { status: 'BLOCKED' })}
-                okText="Khóa"
-                cancelText="Hủy"
+                okText="Block"
+                cancelText="Cancel"
                 okButtonProps={{ danger: true }}
               >
                 <Button
@@ -276,11 +276,11 @@ export const Users: React.FC = () => {
               </Popconfirm>
             ) : isBlocked ? (
               <Popconfirm
-                title="Mở khóa tài khoản"
-                description="Mở khóa tài khoản cho người dùng này?"
+                title="Unblock Account"
+                description="Unblock this user account?"
                 onConfirm={() => handleUpdateUserField(record, { status: 'ACTIVE' })}
-                okText="Mở khóa"
-                cancelText="Hủy"
+                okText="Unblock"
+                cancelText="Cancel"
               >
                 <Button
                   type="text"
@@ -297,11 +297,11 @@ export const Users: React.FC = () => {
               />
             )}
             <Popconfirm
-              title="Reset mật khẩu"
-              description="Reset mật khẩu người dùng về mặc định?"
+              title="Reset Password"
+              description="Reset the user password to default?"
               onConfirm={() => handleResetPassword(record.id)}
               okText="Reset"
-              cancelText="Hủy"
+              cancelText="Cancel"
             >
               <Button
                 type="text"
@@ -310,7 +310,7 @@ export const Users: React.FC = () => {
               />
             </Popconfirm>
             {isActive ? (
-              <Tooltip title="Không thể xóa người dùng đang hoạt động. Vui lòng khóa tài khoản trước.">
+              <Tooltip title="Cannot delete an active user. Please block the account first.">
                 <Button
                   type="text"
                   disabled
@@ -321,11 +321,11 @@ export const Users: React.FC = () => {
               </Tooltip>
             ) : (
               <Popconfirm
-                title="Xóa người dùng"
-                description="Bạn có chắc chắn muốn xóa người dùng này không?"
+                title="Delete User"
+                description="Are you sure you want to delete this user?"
                 onConfirm={() => handleDelete(record.id)}
-                okText="Xóa"
-                cancelText="Hủy"
+                okText="Delete"
+                cancelText="Cancel"
                 okButtonProps={{ danger: true }}
               >
                 <Button
@@ -348,10 +348,10 @@ export const Users: React.FC = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
         <div>
           <h2 style={{ fontSize: '24px', fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>
-            Quản lý người dùng
+            User Management
           </h2>
           <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>
-            Xem danh sách, phân quyền và quản lý tài khoản thành viên.
+            View, manage, and assign permissions to member accounts.
           </p>
         </div>
         <Space>
@@ -373,7 +373,7 @@ export const Users: React.FC = () => {
               gap: 6,
             }}
           >
-            Thêm người dùng
+            Add User
           </Button>
         </Space>
       </div>
@@ -384,7 +384,7 @@ export const Users: React.FC = () => {
           <div style={{ flex: '1 1 280px', position: 'relative' }}>
             <Search size={16} style={{ position: 'absolute', left: 12, top: 12, color: 'var(--text-light)', zIndex: 1 }} />
             <Input
-              placeholder="Tìm theo tên hoặc email..."
+              placeholder="Search by name or email..."
               value={searchText}
               onChange={(e) => handleSearchChange(e.target.value)}
               style={{ paddingLeft: '36px', height: '40px' }}
@@ -392,26 +392,26 @@ export const Users: React.FC = () => {
           </div>
 
           <Select
-            placeholder="Lọc vai trò"
+            placeholder="Filter by Role"
             style={{ width: '160px', height: '40px' }}
             allowClear
             onChange={(val) => { setRoleFilter(val || null); setPage(1); }}
             options={[
-              { value: 'ADMIN', label: 'Quản trị viên' },
-              { value: 'MODERATOR', label: 'Biên tập viên' },
-              { value: 'USER', label: 'Người dùng' },
+              { value: 'ADMIN', label: 'Administrator' },
+              { value: 'MODERATOR', label: 'Moderator' },
+              { value: 'USER', label: 'User' },
             ]}
           />
 
           <Select
-            placeholder="Lọc trạng thái"
+            placeholder="Filter by Status"
             style={{ width: '160px', height: '40px' }}
             allowClear
             onChange={(val) => { setStatusFilter(val || null); setPage(1); }}
             options={[
-              { value: 'ACTIVE', label: 'Đang hoạt động' },
-              { value: 'BLOCKED', label: 'Tạm khóa' },
-              { value: 'PENDING_VERIFICATION', label: 'Chờ xác thực' },
+              { value: 'ACTIVE', label: 'Active' },
+              { value: 'BLOCKED', label: 'Blocked' },
+              { value: 'PENDING_VERIFICATION', label: 'Pending Verification' },
             ]}
           />
 
@@ -426,13 +426,11 @@ export const Users: React.FC = () => {
               }}
               style={{ fontWeight: 500, color: 'var(--primary)' }}
             >
-              Xóa bộ lọc
+              Clear Filters
             </Button>
           )}
         </div>
-      </Card>
-
-      {/* Table */}
+      </Card>      {/* Table */}
       <Card bordered={false} styles={{ body: { padding: 0 } }}>
         <Table
           columns={columns}
@@ -453,12 +451,12 @@ export const Users: React.FC = () => {
 
       {/* Add / Edit User Modal */}
       <Modal
-        title={editingUser ? 'Chỉnh sửa thông tin người dùng' : 'Thêm người dùng mới'}
+        title={editingUser ? 'Edit User Information' : 'Add New User'}
         open={isModalOpen}
         onOk={handleSubmit}
         onCancel={() => setIsModalOpen(false)}
-        okText={editingUser ? 'Cập nhật' : 'Thêm mới'}
-        cancelText="Hủy"
+        okText={editingUser ? 'Update' : 'Add'}
+        cancelText="Cancel"
         confirmLoading={modalLoading}
       >
         <Form
@@ -470,43 +468,43 @@ export const Users: React.FC = () => {
         >
           <Form.Item
             name="name"
-            label="Họ và tên"
-            rules={[{ required: true, message: 'Vui lòng nhập họ và tên!' }]}
+            label="Full Name"
+            rules={[{ required: true, message: 'Please enter full name!' }]}
           >
-            <Input placeholder="Ví dụ: Nguyễn Văn A" style={{ height: '40px' }} />
+            <Input placeholder="E.g., John Doe" style={{ height: '40px' }} />
           </Form.Item>
 
           <Form.Item
             name="email"
-            label="Địa chỉ Email"
+            label="Email Address"
             rules={[
-              { required: true, message: 'Vui lòng nhập email!' },
-              { type: 'email', message: 'Email không đúng định dạng!' },
+              { required: true, message: 'Please enter email!' },
+              { type: 'email', message: 'Invalid email address format!' },
             ]}
           >
-            <Input placeholder="Ví dụ: name@example.com" style={{ height: '40px' }} />
+            <Input placeholder="E.g., name@example.com" style={{ height: '40px' }} />
           </Form.Item>
 
           {!editingUser && (
             <Form.Item
               name="phone"
-              label="Số điện thoại"
+              label="Phone Number"
             >
-              <Input placeholder="Ví dụ: 0987654321" style={{ height: '40px' }} />
+              <Input placeholder="E.g., 0987654321" style={{ height: '40px' }} />
             </Form.Item>
           )}
 
           <Form.Item
             name="role"
-            label="Vai trò hệ thống"
-            rules={[{ required: true }]}
+            label="System Role"
+            rules={[{ required: true, message: 'Please select system role!' }]}
           >
             <Select
               style={{ height: '40px' }}
               options={[
-                { value: 'ADMIN', label: 'Quản trị viên' },
-                { value: 'MODERATOR', label: 'Biên tập viên' },
-                { value: 'USER', label: 'Người dùng' },
+                { value: 'ADMIN', label: 'Administrator' },
+                { value: 'MODERATOR', label: 'Moderator' },
+                { value: 'USER', label: 'User' },
               ]}
             />
           </Form.Item>

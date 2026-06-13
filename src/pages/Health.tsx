@@ -36,10 +36,10 @@ export const Health: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Sức khỏe hệ thống</h2>
-          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>Monitor hiệu năng và lỗi API.</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>System Health</h2>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>Monitor API performance and error rates.</p>
         </div>
-        <Button icon={<RefreshCw size={16} />} onClick={fetchData}>Làm mới</Button>
+        <Button icon={<RefreshCw size={16} />} onClick={fetchData}>Refresh</Button>
       </div>
 
       {health && (
@@ -73,11 +73,11 @@ export const Health: React.FC = () => {
       )}
 
       {performance.length > 0 && (
-        <Card title="API Latency (7 ngày)" bordered={false}>
+        <Card title="API Latency (7 Days)" bordered={false}>
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={performance}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="time" tickFormatter={(v) => new Date(v).toLocaleDateString('vi-VN', { month: 'numeric', day: 'numeric' })} />
+              <XAxis dataKey="time" tickFormatter={(v) => new Date(v).toLocaleDateString('en-US', { month: 'numeric', day: 'numeric' })} />
               <YAxis unit="ms" />
               <Tooltip />
               <Line type="monotone" dataKey="avgDuration" stroke="#3b82f6" name="Avg duration (ms)" />
@@ -87,7 +87,7 @@ export const Health: React.FC = () => {
       )}
 
       {errors.length > 0 && (
-        <Card title="Top lỗi (24h)" bordered={false}>
+        <Card title="Top Errors (24h)" bordered={false}>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={errors}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -104,7 +104,7 @@ export const Health: React.FC = () => {
         <Card bordered={false}>
           <div style={{ textAlign: 'center', padding: 40, color: 'var(--text-muted)' }}>
             <Activity size={48} style={{ marginBottom: 16 }} />
-            <p>Chưa có dữ liệu health. Audit logs sẽ populate dần.</p>
+            <p>No health data available yet. Audit logs will populate over time.</p>
           </div>
         </Card>
       )}

@@ -33,39 +33,39 @@ export const TaskMonitor: React.FC = () => {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const statCards = stats ? [
-    { title: 'Tổng task', value: stats.total, color: '#fa8c16' },
-    { title: 'Đang làm', value: stats.inProgress, color: '#3b82f6' },
-    { title: 'Hoàn thành', value: stats.completed, color: '#10b981' },
-    { title: 'Cần làm', value: stats.todo, color: '#8b5cf6' },
-    { title: 'Quá hạn', value: stats.overdue, color: '#ef4444' },
+    { title: 'Total Tasks', value: stats.total, color: '#fa8c16' },
+    { title: 'In Progress', value: stats.inProgress, color: '#3b82f6' },
+    { title: 'Completed', value: stats.completed, color: '#10b981' },
+    { title: 'To Do', value: stats.todo, color: '#8b5cf6' },
+    { title: 'Overdue', value: stats.overdue, color: '#ef4444' },
   ] : [];
 
   const statusLabels: Record<string, string> = {
-    todo: 'Cần làm', in_progress: 'Đang làm', done: 'Hoàn thành',
+    todo: 'To Do', in_progress: 'In Progress', done: 'Completed',
   };
   const statusColors: Record<string, string> = {
     todo: 'default', in_progress: 'blue', done: 'success',
   };
 
   const timelineColumns = [
-    { title: 'STT', key: 'index', width: 60, render: (_: any, __: any, i: number) => (page - 1) * 15 + i + 1 },
-    { title: 'Trạng thái', dataIndex: 'status', key: 'status', width: 130,
+    { title: 'No.', key: 'index', width: 60, render: (_: any, __: any, i: number) => (page - 1) * 15 + i + 1 },
+    { title: 'Status', dataIndex: 'status', key: 'status', width: 130,
       render: (s: string) => <Tag color={statusColors[s]}>{statusLabels[s] || s}</Tag>,
     },
-    { title: 'Độ ưu tiên', dataIndex: 'priority', key: 'priority', width: 100,
+    { title: 'Priority', dataIndex: 'priority', key: 'priority', width: 100,
       render: (p: string) => {
         const colors: Record<string, string> = { high: 'red', medium: 'orange', low: 'default' };
         return <Tag color={colors[p]}>{p || '—'}</Tag>;
       },
     },
-    { title: 'Ngày tạo', dataIndex: 'createdAt', key: 'createdAt', width: 130,
-      render: (d: string) => new Date(d).toLocaleString('vi-VN'),
+    { title: 'Created Date', dataIndex: 'createdAt', key: 'createdAt', width: 130,
+      render: (d: string) => new Date(d).toLocaleString('en-US'),
     },
-    { title: 'Cập nhật', dataIndex: 'updatedAt', key: 'updatedAt', width: 130,
-      render: (d: string) => new Date(d).toLocaleString('vi-VN'),
+    { title: 'Updated Date', dataIndex: 'updatedAt', key: 'updatedAt', width: 130,
+      render: (d: string) => new Date(d).toLocaleString('en-US'),
     },
-    { title: 'Hạn chót', dataIndex: 'dueDate', key: 'dueDate', width: 130,
-      render: (d: string) => d ? new Date(d).toLocaleDateString('vi-VN') : '—',
+    { title: 'Due Date', dataIndex: 'dueDate', key: 'dueDate', width: 130,
+      render: (d: string) => d ? new Date(d).toLocaleDateString('en-US') : '—',
     },
     { title: 'Task List', key: 'taskList', width: 150,
       render: (_: any, r: any) => r.taskList?.name || '—',
@@ -76,10 +76,10 @@ export const TaskMonitor: React.FC = () => {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Giám sát công việc</h2>
-          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>Theo dõi số liệu tasks trên tất cả workspace.</p>
+          <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0, color: 'var(--text-main)' }}>Task Monitor</h2>
+          <p style={{ margin: '4px 0 0', color: 'var(--text-muted)' }}>Monitor task metrics across all workspaces.</p>
         </div>
-        <Button icon={<RefreshCw size={16} />} onClick={fetchData}>Làm mới</Button>
+        <Button icon={<RefreshCw size={16} />} onClick={fetchData}>Refresh</Button>
       </div>
 
       {/* Stats cards */}
@@ -96,7 +96,7 @@ export const TaskMonitor: React.FC = () => {
 
       {/* By workspace */}
       {stats?.byWorkspace && stats.byWorkspace.length > 0 && (
-        <Card title="Phân bố theo Workspace" bordered={false}>
+        <Card title="Distribution by Workspace" bordered={false}>
           <Row gutter={[16, 16]}>
             {stats.byWorkspace.map((ws: any, i: number) => (
               <Col key={i}>
@@ -109,7 +109,7 @@ export const TaskMonitor: React.FC = () => {
 
       {/* Trends chart */}
       {trends.length > 0 && (
-        <Card title="Số lượng task tạo mới (7 ngày)" bordered={false}>
+        <Card title="New Tasks Created (7 Days)" bordered={false}>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={trends}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -123,7 +123,7 @@ export const TaskMonitor: React.FC = () => {
       )}
 
       {/* Timeline - metadata only */}
-      <Card title="Dòng thời gian" bordered={false} styles={{ body: { padding: 0 } }}>
+      <Card title="Timeline" bordered={false} styles={{ body: { padding: 0 } }}>
         <Table
           columns={timelineColumns}
           dataSource={timeline}

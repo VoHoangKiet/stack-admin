@@ -11,6 +11,8 @@ import {
   Database,
   RefreshCw,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../lib/auth';
 import apiClient from '../lib/api';
 
 interface OverviewStats {
@@ -40,6 +42,15 @@ interface UserGrowthData {
 }
 
 export const Dashboard: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user && user.role !== 'ADMIN') {
+      navigate('/workspaces', { replace: true });
+    }
+  }, [user, navigate]);
+
   const [overview, setOverview] = useState<OverviewStats | null>(null);
   const [growth, setGrowth] = useState<UserGrowthData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +67,7 @@ export const Dashboard: React.FC = () => {
       setOverview(overviewRes.data.data);
       setGrowth(growthRes.data.data);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Không thể tải dữ liệu dashboard');
+      setError(err?.response?.data?.message || 'Failed to load dashboard data');
     } finally {
       setLoading(false);
     }
@@ -77,13 +88,13 @@ export const Dashboard: React.FC = () => {
   if (error) {
     return (
       <Alert
-        message="Lỗi tải dữ liệu"
+        message="Error Loading Data"
         description={error}
         type="error"
         showIcon
         action={
           <Button size="small" onClick={fetchData}>
-            Thử lại
+            Try Again
           </Button>
         }
       />
@@ -93,40 +104,40 @@ export const Dashboard: React.FC = () => {
   const stats = overview
     ? [
         {
-          title: 'Tổng số người dùng',
+          title: 'Total Users',
           value: overview.totalUsers.toLocaleString(),
           change: `${overview.totalUsersChange >= 0 ? '+' : ''}${overview.totalUsersChange}%`,
           isPositive: overview.totalUsersChange >= 0,
           icon: <Users size={24} style={{ color: '#fa8c16' }} />,
           bg: 'rgba(250, 140, 22, 0.1)',
-          trendText: 'so với tháng trước',
+          trendText: 'compared to last month',
         },
         {
-          title: `Đang hoạt động (${overview.activeUsersPeriod})`,
+          title: `Active Users (${overview.activeUsersPeriod})`,
           value: overview.activeUsers.toLocaleString(),
           change: `${overview.activeUsersChange >= 0 ? '+' : ''}${overview.activeUsersChange}%`,
           isPositive: overview.activeUsersChange >= 0,
           icon: <UserCheck size={24} style={{ color: '#10b981' }} />,
           bg: 'rgba(16, 185, 129, 0.1)',
-          trendText: 'tổng số người dùng',
+          trendText: 'of total users',
         },
         {
-          title: 'Hiệu suất hệ thống',
+          title: 'System Uptime',
           value: `${overview.systemUptime}%`,
           change: `+${overview.systemUptimeChange}%`,
           isPositive: true,
           icon: <Zap size={24} style={{ color: '#f59e0b' }} />,
           bg: 'rgba(245, 158, 11, 0.1)',
-          trendText: 'Uptime tuần này',
+          trendText: 'Uptime this week',
         },
         {
-          title: 'Sự cố ghi nhận',
+          title: 'Logged Incidents',
           value: String(overview.incidents),
-          change: `đã xử lý ${overview.incidentsResolved}/${overview.incidents}`,
+          change: `resolved ${overview.incidentsResolved}/${overview.incidents}`,
           isPositive: overview.incidentsResolved === overview.incidents,
           icon: <AlertTriangle size={24} style={{ color: '#ef4444' }} />,
           bg: 'rgba(239, 68, 68, 0.1)',
-          trendText: overview.incidentsResolved === overview.incidents ? 'đã xử lý xong' : 'còn tồn đọng',
+          trendText: overview.incidentsResolved === overview.incidents ? 'all resolved' : 'pending',
         },
       ]
     : [];
@@ -150,10 +161,10 @@ export const Dashboard: React.FC = () => {
       >
         <div>
           <h1 style={{ margin: '0 0 8px 0', fontSize: '28px', fontWeight: 700, color: 'var(--text-main)' }}>
-            Chào mừng trở lại, Admin! 👋
+            Welcome back, Admin! 👋
           </h1>
           <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '15px' }}>
-            Hệ thống đang hoạt động ổn định.
+            System is running stably.
           </p>
         </div>
         <Button
@@ -168,7 +179,7 @@ export const Dashboard: React.FC = () => {
             gap: 6,
           }}
         >
-          Làm mới
+          Refresh
         </Button>
       </div>
 
@@ -224,8 +235,8 @@ export const Dashboard: React.FC = () => {
           <Card
             title={
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-                <span>Lượng người dùng mới ({growth?.period === 'week' ? 'tuần này' : growth?.period})</span>
-                <Tag color="orange">Cập nhật trực tiếp</Tag>
+                <span>New Users ({growth?.period === 'week' ? 'this week' : growth?.period})</span>
+                <Tag color="orange">Live Update</Tag>
               </div>
             }
             bordered={false}
@@ -282,14 +293,14 @@ export const Dashboard: React.FC = () => {
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                     <span style={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: 'var(--primary)' }} />
                     <span>
-                      Người dùng mới (Tổng: {growth.totalNewUsers}, TB: {growth.average}/ngày)
+                      New users (Total: {growth.totalNewUsers}, Avg: {growth.average}/day)
                     </span>
                   </div>
                 </div>
               </div>
             ) : (
               <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
-                Không có dữ liệu
+                No data available
               </div>
             )}
           </Card>
@@ -297,14 +308,14 @@ export const Dashboard: React.FC = () => {
 
         {/* Server Health */}
         <Col xs={24} lg={8}>
-          <Card title="Trạng thái hệ thống" bordered={false} style={{ height: '100%' }}>
+          <Card title="System Health" bordered={false} style={{ height: '100%' }}>
             {overview && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: '13px' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontWeight: 500 }}>
                       <Database size={16} style={{ color: 'var(--primary)' }} />
-                      Dung lượng cơ sở dữ liệu
+                      Database Storage
                     </span>
                     <span style={{ fontWeight: 600 }}>
                       {overview.storageUsed} {overview.storageUnit} / {overview.storageTotal} {overview.storageUnit}
@@ -366,10 +377,10 @@ export const Dashboard: React.FC = () => {
                         boxShadow: '0 0 8px var(--success)',
                       }}
                     />
-                    <span style={{ fontSize: '13px', fontWeight: 600 }}>Cổng API Gateway: Trực Tuyến</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600 }}>API Gateway: Online</span>
                   </div>
                   <p style={{ margin: '6px 0 0 18px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                    Độ trễ trung bình: <strong style={{ color: 'var(--success)' }}>{overview.apiLatency}ms</strong>. Hệ thống{' '}
+                    Average latency: <strong style={{ color: 'var(--success)' }}>{overview.apiLatency}ms</strong>. System{' '}
                     {overview.systemUptime}% uptime.
                   </p>
                 </div>
