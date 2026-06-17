@@ -1,20 +1,33 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { ConfigProvider, theme } from 'antd';
 import { AuthProvider } from './lib/auth';
+import { WorkspaceProvider } from './lib/workspace-context';
 import { ProtectedLayout } from './components/ProtectedLayout';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Users } from './pages/Users';
 import { Settings } from './pages/Settings';
-import { Workspaces } from './pages/Workspaces';
 import { AuditLogs } from './pages/AuditLogs';
 import { TaskMonitor } from './pages/TaskMonitor';
 import { Health } from './pages/Health';
 import { Analytics } from './pages/Analytics';
 import { Content } from './pages/Content';
 import { Communications } from './pages/Communications';
+import { WorkspaceListPage } from './pages/workspace/WorkspaceListPage';
+import { MembersPage } from './pages/workspace/MembersPage';
+import { RolesPage } from './pages/workspace/RolesPage';
+import { TasksPage } from './pages/workspace/TasksPage';
+import { MeetingsPage } from './pages/workspace/MeetingsPage';
+import { WorkspaceSettingsPage } from './pages/workspace/WorkspaceSettingsPage';
+import { WorkspaceLayout } from './components/WorkspaceLayout';
 import enUS from 'antd/locale/en_US';
+
+// Redirects to /workspaces/:id/members using absolute path to avoid relative-path loop
+const WorkspaceRedirect: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={`/workspaces/${id}/members`} replace />;
+};
 
 const App: React.FC = () => {
   const [darkMode, setDarkMode] = useState<boolean>(() => {
@@ -68,22 +81,39 @@ const App: React.FC = () => {
     >
       <BrowserRouter>
         <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/" element={<ProtectedLayout darkMode={darkMode} setDarkMode={setDarkMode} />}>
-              <Route index element={<Dashboard />} />
-              <Route path="users" element={<Users />} />
-              <Route path="workspaces" element={<Workspaces />} />
-              <Route path="task-monitor" element={<TaskMonitor />} />
-              <Route path="health" element={<Health />} />
-              <Route path="analytics" element={<Analytics />} />
-              <Route path="content" element={<Content />} />
-              <Route path="audit-logs" element={<AuditLogs />} />
-              <Route path="communications" element={<Communications />} />
-              <Route path="settings" element={<Settings />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Route>
-          </Routes>
+          <WorkspaceProvider>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/" element={<ProtectedLayout darkMode={darkMode} setDarkMode={setDarkMode} />}>
+                <Route index element={<Dashboard />} />
+                <Route path="users" element={<Users />} />
+                <Route path="workspaces" element={<WorkspaceListPage />} />
+                <Route path="task-monitor" element={<TaskMonitor />} />
+                <Route path="health" element={<Health />} />
+                <Route path="analytics" element={<Analytics />} />
+                <Route path="content" element={<Content />} />
+                <Route path="audit-logs" element={<AuditLogs />} />
+                <Route path="communications" element={<Communications />} />
+                <Route path="settings" element={<Settings />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Route>
+
+              {/* Workspace context routes – use WorkspaceLayout */}
+              <Route
+                path="/workspaces/:id"
+                element={<WorkspaceLayout darkMode={darkMode} setDarkMode={setDarkMode} />}
+              >
+                <Route index element={<WorkspaceRedirect />} />
+                <Route path="members" element={<MembersPage />} />
+                <Route path="roles" element={<RolesPage />} />
+                <Route path="tasks" element={<TasksPage />} />
+                <Route path="meetings" element={<MeetingsPage />} />
+                <Route path="settings" element={<WorkspaceSettingsPage />} />
+                {/* Wildcard MUST use absolute path – relative 'members' causes infinite loop */}
+                <Route path="*" element={<WorkspaceRedirect />} />
+              </Route>
+            </Routes>
+          </WorkspaceProvider>
         </AuthProvider>
       </BrowserRouter>
     </ConfigProvider>
