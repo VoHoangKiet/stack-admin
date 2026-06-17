@@ -47,6 +47,16 @@ interface WorkspaceItem {
   plan: string;
   createdAt: string;
   currentUserRole?: string;
+  permissions?: WorkspaceCapabilities;
+}
+
+interface WorkspaceCapabilities {
+  canInviteMembers?: boolean;
+  canUpdateMemberRole?: boolean;
+  canRemoveMembers?: boolean;
+  canCreateChannel?: boolean;
+  canManageWorkspaceRoles?: boolean;
+  canUpdateWorkspaceSettings?: boolean;
 }
 
 interface WorkspaceRole {
@@ -57,46 +67,67 @@ interface WorkspaceRole {
   createdAt: string;
 }
 
-const PERMISSION_GROUPS = [
-  {
-    title: 'Workspace Management',
-    permissions: [
-      { label: 'All Workspace Permissions', value: 'workspace:*' },
-      { label: 'View Workspace', value: 'workspace:view' },
-      { label: 'Edit Workspace', value: 'workspace:edit' },
-      { label: 'Delete Workspace', value: 'workspace:delete' },
-    ],
-  },
-  {
-    title: 'Member Management',
-    permissions: [
-      { label: 'All Member Permissions', value: 'member:*' },
-      { label: 'View Member', value: 'member:view' },
-      { label: 'Invite Member', value: 'member:invite' },
-      { label: 'Remove Member', value: 'member:remove' },
-      { label: 'Edit Member Role', value: 'member:edit-role' },
-    ],
-  },
-  {
-    title: 'Channel Management',
-    permissions: [
-      { label: 'All Channel Permissions', value: 'channel:*' },
-      { label: 'View Channel', value: 'channel:view' },
-      { label: 'Create Channel', value: 'channel:create' },
-      { label: 'Delete Channel', value: 'channel:delete' },
-      { label: 'Join Channel', value: 'channel:join' },
-    ],
-  },
-  {
-    title: 'Message Management',
-    permissions: [
-      { label: 'All Message Permissions', value: 'message:*' },
-      { label: 'View Message', value: 'message:view' },
-      { label: 'Send Message', value: 'message:create' },
-      { label: 'Delete Message', value: 'message:delete' },
-    ],
-  },
+const PERMISSION_OPTIONS = [
+  { label: 'All Workspace Permissions', value: 'workspace:*' },
+  { label: 'Manage Roles & Permissions', value: 'workspace:manage_roles', parent: 'workspace:*' },
+  { label: 'Update Workspace Settings', value: 'workspace:update_settings', parent: 'workspace:*' },
+  { label: 'All Member Permissions', value: 'member:*' },
+  { label: 'Invite Members', value: 'member:invite', parent: 'member:*' },
+  { label: 'Update Member Roles', value: 'member:update_role', parent: 'member:*' },
+  { label: 'Remove Members', value: 'member:remove', parent: 'member:*' },
+  { label: 'All Channel Permissions', value: 'channel:*' },
+  { label: 'Create Channels', value: 'channel:create', parent: 'channel:*' },
 ];
+
+const ALLOWED_PERMISSION_ACTIONS = new Set(PERMISSION_OPTIONS.map((permission) => permission.value));
+
+const LEGACY_PERMISSION_ACTION_MAP: Record<string, string> = {
+  'workspace:edit': 'workspace:update_settings',
+  'member:edit-role': 'member:update_role',
+};
+
+const collapseWildcardActions = (actions: string[]) => {
+  const selected = new Set(actions);
+  PERMISSION_OPTIONS.forEach((permission) => {
+    if (permission.parent && selected.has(permission.parent)) {
+      selected.delete(permission.value);
+    }
+  });
+  return Array.from(selected);
+};
+
+const normalizePermissionsForEditor = (permissions?: Record<string, any>) => {
+  const actions = permissions?.actions || {};
+  const normalizedActions: Record<string, boolean> = {};
+
+  Object.keys(actions).forEach((action) => {
+    if (actions[action] !== true) return;
+
+    const mappedAction = LEGACY_PERMISSION_ACTION_MAP[action] || action;
+    if (ALLOWED_PERMISSION_ACTIONS.has(mappedAction)) {
+      normalizedActions[mappedAction] = true;
+    }
+  });
+
+  const collapsedActions = collapseWildcardActions(Object.keys(normalizedActions)).reduce<Record<string, boolean>>(
+    (acc, action) => {
+      acc[action] = true;
+      return acc;
+    },
+    {}
+  );
+
+  return {
+    ...permissions,
+    actions: collapsedActions,
+    dataScopes: {
+      ...(permissions?.dataScopes || {}),
+      workspace: Array.isArray(permissions?.dataScopes?.workspace)
+        ? permissions.dataScopes.workspace
+        : ['basic'],
+    },
+  };
+};
 
 export const Workspaces: React.FC = () => {
   const { user } = useAuth();
@@ -124,6 +155,24 @@ export const Workspaces: React.FC = () => {
   const defaultRoles = ['owner', 'admin', 'member'];
 
   const isSystemAdmin = user?.role === 'ADMIN';
+  const getWorkspaceCapabilities = (workspace: WorkspaceItem | null): WorkspaceCapabilities => {
+    if (!workspace) return {};
+    if (isSystemAdmin || workspace.currentUserRole === 'owner') {
+      return {
+        canInviteMembers: true,
+        canUpdateMemberRole: true,
+        canRemoveMembers: true,
+        canCreateChannel: true,
+        canManageWorkspaceRoles: true,
+        canUpdateWorkspaceSettings: true,
+      };
+    }
+    return workspace.permissions || {};
+  };
+  const selectedCapabilities = getWorkspaceCapabilities(selectedWs);
+  const canManageWorkspaceRoles = selectedCapabilities.canManageWorkspaceRoles === true;
+  const canUpdateMemberRole = selectedCapabilities.canUpdateMemberRole === true;
+  const canRemoveMembers = selectedCapabilities.canRemoveMembers === true;
 
   const fetchWorkspaces = useCallback(async () => {
     setLoading(true);
@@ -136,7 +185,11 @@ export const Workspaces: React.FC = () => {
         const managed = data.filter((ws: any) => 
           ws.ownerId === user?.id || 
           ws.currentUserRole === 'owner' || 
-          ws.currentUserRole === 'admin'
+          ws.currentUserRole === 'admin' ||
+          ws.permissions?.canManageWorkspaceRoles ||
+          ws.permissions?.canUpdateMemberRole ||
+          ws.permissions?.canInviteMembers ||
+          ws.permissions?.canCreateChannel
         );
         setWorkspaces(managed);
       }
@@ -191,31 +244,33 @@ export const Workspaces: React.FC = () => {
   };
 
   const handleOpenRoleModal = (role?: WorkspaceRole) => {
+    if (!canManageWorkspaceRoles) {
+      message.error('You do not have permission to manage roles');
+      return;
+    }
+
     if (role) {
       setEditingRole(role);
-      const actionsObj = role.permissions?.actions || {};
+      const editorPermissions = normalizePermissionsForEditor(role.permissions || {});
+      const actionsObj = editorPermissions.actions || {};
       const activeActions = Object.keys(actionsObj).filter((k) => actionsObj[k] === true);
 
       roleForm.setFieldsValue({
         name: role.name,
         actionsList: activeActions,
-        permissionsJson: JSON.stringify(role.permissions || {}, null, 2),
+        permissionsJson: JSON.stringify(editorPermissions, null, 2),
       });
     } else {
       setEditingRole(null);
-      const defaultPerms = {
-        actions: {
-          'channel:view': true,
-          'message:create': true,
-          'message:view': true,
-        },
+      const defaultPerms = normalizePermissionsForEditor({
+        actions: {},
         dataScopes: {
-          workspace: ['basic'],
+          workspace: ['basic', 'settings', 'plan'],
         },
-      };
+      });
       roleForm.setFieldsValue({
         name: '',
-        actionsList: ['channel:view', 'message:create', 'message:view'],
+        actionsList: [],
         permissionsJson: JSON.stringify(defaultPerms, null, 2),
       });
     }
@@ -224,7 +279,7 @@ export const Workspaces: React.FC = () => {
 
   const handleCheckboxChange = (checkedValues: string[]) => {
     const actionsObj: Record<string, boolean> = {};
-    checkedValues.forEach((val) => {
+    collapseWildcardActions(checkedValues).forEach((val) => {
       actionsObj[val] = true;
     });
 
@@ -241,6 +296,7 @@ export const Workspaces: React.FC = () => {
     };
 
     roleForm.setFieldsValue({
+      actionsList: Object.keys(actionsObj),
       permissionsJson: JSON.stringify(updatedPermissions, null, 2),
     });
   };
@@ -248,7 +304,7 @@ export const Workspaces: React.FC = () => {
   const handleJsonChange = (jsonStr: string) => {
     try {
       const parsed = JSON.parse(jsonStr);
-      const actionsObj = parsed.actions || {};
+      const actionsObj = normalizePermissionsForEditor(parsed).actions || {};
       const activeActions = Object.keys(actionsObj).filter((k) => actionsObj[k] === true);
       roleForm.setFieldsValue({
         actionsList: activeActions,
@@ -260,6 +316,10 @@ export const Workspaces: React.FC = () => {
 
   const handleRoleSubmit = async () => {
     if (!selectedWs) return;
+    if (!canManageWorkspaceRoles) {
+      message.error('You do not have permission to manage roles');
+      return;
+    }
     try {
       const values = await roleForm.validateFields();
       let parsedPermissions = {};
@@ -293,6 +353,10 @@ export const Workspaces: React.FC = () => {
 
   const handleDeleteRole = async (roleId: string) => {
     if (!selectedWs) return;
+    if (!canManageWorkspaceRoles) {
+      message.error('You do not have permission to manage roles');
+      return;
+    }
     try {
       await apiClient.delete(`/admin/workspace-roles/${roleId}`);
       message.success('Role deleted successfully');
@@ -305,12 +369,32 @@ export const Workspaces: React.FC = () => {
 
   const handleUpdateMemberRole = async (memberId: string, roleId: string) => {
     if (!selectedWs) return;
+    if (!canUpdateMemberRole) {
+      message.error('You do not have permission to update member roles');
+      return;
+    }
     try {
       await apiClient.put(`/admin/workspace-members/${memberId}/role`, { roleId });
       message.success('Member role updated successfully');
       fetchMembers(selectedWs.id, memberPage, memberPageSize, memberSearch);
     } catch (error: any) {
       const errMsg = error.response?.data?.message || 'Failed to change role for this member';
+      message.error(errMsg);
+    }
+  };
+
+  const handleRemoveWorkspaceMember = async (member: WorkspaceMember) => {
+    if (!selectedWs) return;
+    if (!canRemoveMembers) {
+      message.error('You do not have permission to remove members');
+      return;
+    }
+    try {
+      await apiClient.delete(`/admin/workspace-members/${member.id}`);
+      message.success('Member removed successfully');
+      fetchMembers(selectedWs.id, memberPage, memberPageSize, memberSearch);
+    } catch (error: any) {
+      const errMsg = error.response?.data?.message || 'Failed to remove this member';
       message.error(errMsg);
     }
   };
@@ -323,33 +407,31 @@ export const Workspaces: React.FC = () => {
 
   const renderPermissionCheckboxes = (selectedValues: string[], onChange: (values: string[]) => void) => {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-        {PERMISSION_GROUPS.map((group) => (
-          <div key={group.title} style={{ border: '1px solid #f0f0f0', borderRadius: 6, padding: 12 }}>
-            <div style={{ fontWeight: 600, marginBottom: 8, color: 'var(--text-main)' }}>{group.title}</div>
-            <Row gutter={[16, 8]}>
-              {group.permissions.map((perm) => (
-                <Col span={12} key={perm.value}>
-                  <Checkbox
-                    checked={selectedValues.includes(perm.value)}
-                    onChange={(e) => {
-                      const isChecked = e.target.checked;
-                      let newValues = [...selectedValues];
-                      if (isChecked) {
-                        newValues.push(perm.value);
-                      } else {
-                        newValues = newValues.filter((val) => val !== perm.value);
-                      }
-                      onChange(newValues);
-                    }}
-                  >
-                    {perm.label} <code style={{ fontSize: '10px', color: 'var(--text-muted)' }}>({perm.value})</code>
-                  </Checkbox>
-                </Col>
-              ))}
-            </Row>
-          </div>
-        ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {PERMISSION_OPTIONS.map((perm) => {
+          const isDisabled = Boolean(perm.parent && selectedValues.includes(perm.parent));
+          const isChecked = selectedValues.includes(perm.value) || isDisabled;
+
+          return (
+            <Checkbox
+              key={perm.value}
+              checked={isChecked}
+              disabled={isDisabled}
+              onChange={(e) => {
+                const isNowChecked = e.target.checked;
+                let newValues = [...selectedValues];
+                if (isNowChecked) {
+                  newValues.push(perm.value);
+                } else {
+                  newValues = newValues.filter((val) => val !== perm.value);
+                }
+                onChange(Array.from(new Set(newValues)));
+              }}
+            >
+              {perm.label} <code style={{ fontSize: '10px', color: 'var(--text-muted)' }}>({perm.value})</code>
+            </Checkbox>
+          );
+        })}
       </div>
     );
   };
@@ -568,7 +650,34 @@ export const Workspaces: React.FC = () => {
                                    .filter((r) => r.name.toLowerCase() !== 'owner')
                                    .map((r) => ({ label: r.name, value: r.id }))}
                                  loading={rolesLoading}
+                                 disabled={!canUpdateMemberRole}
                                />
+                             );
+                           },
+                         },
+                         {
+                           title: '',
+                           key: 'memberAction',
+                           width: 56,
+                           render: (_: any, record: WorkspaceMember) => {
+                             const isOwner = record.roleName.toLowerCase() === 'owner';
+                             if (isOwner) return null;
+                             return (
+                               <Popconfirm
+                                 title="Are you sure you want to remove this member?"
+                                 onConfirm={() => handleRemoveWorkspaceMember(record)}
+                                 okText="Yes"
+                                 cancelText="No"
+                                 disabled={!canRemoveMembers}
+                               >
+                                 <Button
+                                   type="text"
+                                   size="small"
+                                   danger
+                                   disabled={!canRemoveMembers}
+                                   icon={<Trash2 size={14} />}
+                                 />
+                               </Popconfirm>
                              );
                            },
                          },
@@ -594,6 +703,7 @@ export const Workspaces: React.FC = () => {
                         <Button
                           type="primary"
                           icon={<Plus size={14} />}
+                          disabled={!canManageWorkspaceRoles}
                           onClick={() => handleOpenRoleModal()}
                         >
                           Add Role
@@ -644,6 +754,7 @@ export const Workspaces: React.FC = () => {
                                     type="text"
                                     size="small"
                                     icon={<Edit2 size={14} />}
+                                    disabled={!canManageWorkspaceRoles}
                                     onClick={() => handleOpenRoleModal(record)}
                                   />
                                   {!isDefault && (
@@ -652,11 +763,13 @@ export const Workspaces: React.FC = () => {
                                       onConfirm={() => handleDeleteRole(record.id)}
                                       okText="Yes"
                                       cancelText="No"
+                                      disabled={!canManageWorkspaceRoles}
                                     >
                                       <Button
                                         type="text"
                                         size="small"
                                         danger
+                                        disabled={!canManageWorkspaceRoles}
                                         icon={<Trash2 size={14} />}
                                       />
                                     </Popconfirm>
@@ -684,6 +797,7 @@ export const Workspaces: React.FC = () => {
         onCancel={() => setRoleModalOpen(false)}
         okText="Save"
         cancelText="Cancel"
+        okButtonProps={{ disabled: !canManageWorkspaceRoles }}
         width={600}
       >
         <Form form={roleForm} layout="vertical" style={{ marginTop: 16 }}>
@@ -710,7 +824,7 @@ export const Workspaces: React.FC = () => {
                 label: 'Permissions (Visual)',
                 children: (
                   <div style={{ maxHeight: 350, overflowY: 'auto', paddingRight: 8, paddingTop: 8 }}>
-                    <Form.Item name="actionsList" noStyle>
+                    <Form.Item noStyle shouldUpdate>
                       {({ getFieldValue }) => {
                         const list = getFieldValue('actionsList') || [];
                         return renderPermissionCheckboxes(list, (newValues) => {
